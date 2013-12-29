@@ -1,0 +1,39 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=640, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0"/>
+    <title>Scavenge</title>
+    <script defer src='js/lib/utils.js'></script>
+    <script defer src='js/lib/ready.min.js'></script>
+    <script defer src='js/lib/noise/seedrandom.js'></script>
+    <script defer src='js/lib/noise/Generator.js'></script>
+    <script defer src='js/lib/engine.js'></script>
+    <script defer src='js/scavenge/main.js'></script>
+    <style type="text/css" media="screen">
+      * {
+        margin: 0px;
+        padding: 0px;
+        overflow: hidden;
+      }
+      #canvas {
+        width: 100%;
+        height: 100%;
+      }
+      canvas {
+        position: absolute;
+      }
+    </style>
+  </head>
+  <body>
+    <img src="assets/grass.png" style="display:none;" />
+    <img src="assets/water.png" style="display:none;" />
+    <img src="assets/sand.png"  style="display:none;" />
+    <img src="assets/log.png"  style="display:none;" />
+    <img src="assets/dirt.png"  style="display:none;" />
+    <img src="assets/snow.png"  style="display:none;" />
+    <img src="assets/ice.png"  style="display:none;" />
+    <canvas id="world"></canvas>
+    <canvas id="overlay"></canvas>
+  </body>
+</html>
