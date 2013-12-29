@@ -19,18 +19,30 @@ domready(function(){
   engine.seed = 'sexpot';
   engine.offsetX = 0;
   engine.offsetY = 0;
-  engine.noise = {
-    season: new perlin.gen(engine.seed),
-    mass: new perlin.gen(engine.seed),
-    foliage: new perlin.gen(engine.seed)
-  }
-
-  engine.noise.foliage.frequency = 0.5
-  engine.noise.season.frequency = 0.005
-  engine.noise.season.octaves = 1
 
 
 
+  engine.perlinWorker = new Worker('js/lib/noise/perlinWorker.js');
+  engine.perlinWorker.postMessage();
+  engine.perlinWorker.postMessage({ cmd: 'assign', name: 'world'  , seed: engine.seed });
+  engine.perlinWorker.postMessage({ cmd: 'assign', name: 'foliage', seed: engine.seed });
+  engine.perlinWorker.postMessage({ cmd: 'assign', name: 'season' , seed: engine.seed });
+  engine.perlinWorker.postMessage({
+    cmd: 'configure',
+    name: 'foliage',
+    frequency: 0.5
+  });
+  engine.perlinWorker.postMessage({
+    cmd: 'configure',
+    name: 'season',
+    frequency: 0.005,
+    octaves: 1
+  });
+
+  engine.perlinWorker.addEventListener('message', function(data) {
+    console.log(data)
+    engine.paintTile(data.x, data.y, engine.blockAt(data.value, 1));
+  }, false);
 
   engine.blockAt = function(height, value) {
     if (height <= 0.4) {
@@ -82,17 +94,25 @@ domready(function(){
     var h = Math.floor($('overlay').height/engine.tileSize);
     for (var x = 0; x <= w; x++) {
       for (var y = 0; y <= h; y++) {
-        var height = engine.noise.mass.point([x+engine.offsetX, y+engine.offsetY] );
-        var season = engine.noise.season.point([x+engine.offsetX, y+engine.offsetY] );
-        engine.paintTile(x, y, engine.blockAt(height, season));
 
-        var tree = engine.noise.foliage.point([x+engine.offsetX, y+engine.offsetY] );
-        if (engine.hasTree(tree)){
+        engine.perlinWorker.postMessage({
+          cmd: 'point',
+          name: 'world',
+          x: x,
+          y: y
+        });
 
-          if (engine.blockAt(height) == 'grass') {
-            engine.paintTile(x, y, 'log');
-          }
-        }
+        //var height = engine.noise.mass.point([x+engine.offsetX, y+engine.offsetY] );
+        //var season = engine.noise.season.point([x+engine.offsetX, y+engine.offsetY] );
+        //engine.paintTile(x, y, engine.blockAt(height, season));
+
+        //var tree = engine.noise.foliage.point([x+engine.offsetX, y+engine.offsetY] );
+        //if (engine.hasTree(tree)){
+
+        //  if (engine.blockAt(height) == 'grass') {
+        //    engine.paintTile(x, y, 'log');
+        //  }
+        //}
       }
     }
   }

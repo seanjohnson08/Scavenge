@@ -7,7 +7,7 @@ var engine = { };
 engine.overlayContext = false;
 engine.worldContext = false;
 
-engine.tileSize = 8;
+engine.tileSize = 32;
 engine.tileW = engine.tileSize;
 engine.tileH = engine.tileSize;
 engine.tiles = { };
