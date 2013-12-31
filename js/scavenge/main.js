@@ -6,29 +6,31 @@ function resize(){
 window.addEventListener('resize',resize);
 resize();
 
+window.requestAnimationFrame=window.requestAnimationFrame||window.mozRequestAnimationFrame;
+
 
 window.addEventListener('load',function(){
     engine.world.init({
         seed:"sexpot"
     });
 
-    engine.world.draw();
-
-    function run(){
-        engine.world.draw();
-        window.requestAnimationFrame(run);
-    }
-    window.requestAnimationFrame(run);
+    engine.mainLoop();
 });
 
 (function(){
     var dragStart={x:0,y:0};
     var dragging=false;
     var cameraStart={};
+    window.oncontextmenu=function(event){
+        event.preventDefault();
+        return false;
+    };
     window.onmousedown=function(event){
-        dragStart={x:event.clientX,y:event.clientY};
-        cameraStart={x:engine.camera.x,y:engine.camera.y};
-        dragging=true;
+        if(event.which==3) {
+            dragStart={x:event.clientX,y:event.clientY};
+            cameraStart={x:engine.camera.x,y:engine.camera.y};
+            dragging=true;
+        }
     };
     window.onmousemove=function(event){
         if(dragging){

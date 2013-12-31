@@ -109,3 +109,32 @@ engine.world={
         return global;
     })()
 };
+
+engine.debug={
+    frame:0,
+    fps:function(){
+        var fps=document.getElementById('fps');
+        if(!fps) {
+            fps=document.createElement('div');
+            fps.id='fps';
+            document.body.appendChild(fps);
+            fps.style.position='absolute';
+            fps.style.left='0';
+            fps.style.top='0';
+            var lastFrame=engine.debug.frame;
+            setInterval(function(){
+                fps.innerHTML=engine.debug.frame-lastFrame;
+                lastFrame=engine.debug.frame;
+            },1000);
+        }
+    }
+};
+
+engine.mainLoop=function(){
+    function run(){
+        engine.debug.frame++;
+        engine.world.draw();
+        window.requestAnimationFrame(run);
+    }
+    window.requestAnimationFrame(run);
+};
