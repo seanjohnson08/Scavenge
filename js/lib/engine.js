@@ -1,99 +1,134 @@
-/*
-  Phelps does JS LOL!?!?!
-*/
+var engine={};
 
-var engine = { };
-
-engine.overlayContext = false;
-engine.worldContext = false;
-
-engine.tileSize = 32;
-engine.tileW = engine.tileSize;
-engine.tileH = engine.tileSize;
-engine.tiles = { };
-engine.pixels = { };
-engine.scene = [];
-engine.highlightedTile = [0, 0];
-
-
-engine.setContext = function(overlayID, worldID) {
-  engine.overlayCanvas = document.getElementById(overlayID);
-  engine.overlayContext = engine.overlayCanvas.getContext('2d');
-  engine.worldCanvas = document.getElementById(worldID);
-  engine.worldContext = engine.worldCanvas.getContext('2d');
+engine.camera={
+    x:0,
+    y:0,
+    width:0,
+    height:0
 };
 
-engine.loadTile = function(resource) {
-  for(var source in resource) {
-    if (source) {
-      engine.tiles[source] = new Image();
-      engine.tiles[source].src = resource[source];
+engine.world={
+    canvas: null,
+    context: null,
+    seed: "overwriteme",
+    numWorkers: 8,
+    workers: [],
+    chunk: {
+        tileSize: 16,
+        width: 160,
+        height: 160,
+        draw:function(x,y){
+            if(typeof engine.world.chunk.cache[x+','+y]!="undefined") {
+                engine.world.context.drawImage(
+                    engine.world.chunk.cache[x+','+y],
+                    x*engine.world.chunk.width-engine.camera.x,
+                    y*engine.world.chunk.height-engine.camera.y,
+                    engine.world.chunk.width,
+                    engine.world.chunk.height
+                );
+            } else {
+                engine.world.chunk.cache[x+','+y]=new Image();
+                engine.world.workers[engine.world.workers.current].postMessage({
+                    x:x,
+                    y:y
+                });
+                engine.world.workers.current++;
+                if(engine.world.workers.current>=engine.world.numWorkers) {
+                    engine.world.workers.current=0;
+                }
+            }
+        },
+        store:function(event){
+            if(event.data) {
+                var image=new Image();
+                var tmpCanvas=document.createElement('canvas');
+                tmpCanvas.height=engine.world.chunk.height;
+                tmpCanvas.width=engine.world.chunk.width;
+                tmpCtx=tmpCanvas.getContext('2d');
+                event.data.result.forEach(function(row,y){
+                    row.forEach(function(tile,x){
+                        tmpCtx.drawImage(
+                            engine.world.tiles[tile],
+                            x*engine.world.chunk.tileSize,
+                            y*engine.world.chunk.tileSize,
+                            engine.world.chunk.tileSize,
+                            engine.world.chunk.tileSize
+                        );
+                    });
+                });
+                image.src=tmpCanvas.toDataURL();
+                engine.world.chunk.cache[event.data.x+','+event.data.y]=tmpCanvas;
+            }
+        },
+        cache:{}
+    },
+    draw: function(){
+        var startX=Math.floor(engine.camera.x/engine.world.chunk.width);
+        var startY=Math.floor(engine.camera.y/engine.world.chunk.height);
+        var endX=Math.ceil(engine.camera.width/engine.world.chunk.width)+startX;
+        var endY=Math.ceil(engine.camera.height/engine.world.chunk.height)+startY;
+        var x,y;
+        for(x=startX;x<=endX;x++) {
+            for(y=startY;y<=endY;y++) {
+                engine.world.chunk.draw(x,y);
+            }
+        }
+    },
+    init: function(opts){
+        var i;
+        engine.world.seed=opts.seed||engine.world.seed;
+        engine.world.numWorkers=opts.numWorkers||engine.world.numWorkers;
+
+        engine.world.canvas=document.getElementById('world');
+        engine.world.context=engine.world.canvas.getContext('2d');
+
+        for(i=0;i<engine.world.numWorkers;i++) {
+            engine.world.workers[i]=new Worker('js/lib/worldRenderWorker.js');
+            engine.world.workers[i].postMessage({
+                seed:engine.world.seed,
+                tileSize:engine.world.chunk.tileSize,
+                chunk:{
+                    width:engine.world.chunk.width,
+                    height:engine.world.chunk.height
+                }
+            });
+            engine.world.workers[i].addEventListener('message',engine.world.chunk.store);
+        }
+        engine.world.workers.current=0;
+    },
+    tiles:(function(){
+        var i;
+        var tiles=['dirt','grass','ice','log','sand','snow','water'];
+        var global={};
+
+        for(i=0;i<tiles.length;i++) {
+            global[tiles[i]]=new Image();
+            global[tiles[i]].src='assets/'+tiles[i]+'.png';
+        }
+
+        return global;
+    })()
+};
+
+engine.debug={
+    frame:0,
+    fps:function(){
+        var fps=document.getElementById('fps');
+        if(fps) {
+            var lastFrame=engine.debug.frame;
+            setInterval(function(){
+                fps.innerHTML=engine.debug.frame-lastFrame;
+                lastFrame=engine.debug.frame;
+            }, 1000);
+        }
     }
-  }
 };
 
-engine.paintTile = function(x, y, tile) {
-  var posX = (x-1) * engine.tileW;
-  var posY = (y-1) * engine.tileH;
-  engine.worldContext.drawImage(engine.tiles[tile], posX, posY, engine.tileW, engine.tileH);
+engine.mainLoop=function(){
+    function run(){
+        engine.debug.frame++;
+        engine.world.draw();
+        window.requestAnimationFrame(run);
+    }
+    window.requestAnimationFrame(run);
 };
-
-engine.clearHighlight = function() {
-  engine.overlayContext.clearRect(0, 0, engine.overlayCanvas.width, engine.overlayCanvas.height);
-}
-
-engine.highlightTile = function(x, y) {
-  engine.clearHighlight();
-  if (!engine.selecting) {
-    var posX = (x-1) * engine.tileW;
-    var posY = (y-1) * engine.tileH;
-
-    engine.overlayContext.beginPath();
-    engine.overlayContext.rect(posX, posY, engine.tileW, engine.tileH);
-    engine.overlayContext.lineWidth = 1;
-    engine.overlayContext.strokeStyle = 'white';
-    engine.overlayContext.stroke();
-  }
-
-  if (engine.selection) {
-    engine.highlightSelection(engine.selection[0],engine.selection[1],engine.selection[2],engine.selection[3])
-  }
-}
-
-engine.highlightSelectionPoint = function(x, y) {
-  var posX = (x-1) * engine.tileW;
-  var posY = (y-1) * engine.tileH;
-  engine.overlayContext.beginPath();
-  engine.overlayContext.rect(posX, posY, engine.tileW, engine.tileH);
-  engine.overlayContext.fillStyle = 'rgba(255, 255, 255, 0.4)';
-  engine.overlayContext.fill();
-}
-
-engine.highlightSelection = function(xFrom, yFrom, xTo, yTo) {
-  var startX = (xFrom-1) * engine.tileSize;
-  var startY = (yFrom-1) * engine.tileSize;
-  var endX = (xTo-xFrom+1) * engine.tileSize;
-  var endY = (yTo-yFrom+1) * engine.tileSize;
-  engine.overlayContext.beginPath();
-  engine.overlayContext.rect(startX, startY, endX, endY);
-  engine.overlayContext.fillStyle = 'rgba(0, 0, 0, 0.4)';
-  engine.overlayContext.fill();
-  engine.overlayContext.lineWidth = 2;
-  engine.overlayContext.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-  engine.overlayContext.stroke();
-}
-
-engine.paintPixel = function(x, y, color) {
-  /* slow
-  if (!engine.pixels[color]) {
-    engine.pixels[color] = engine.worldContext.createImageData(1,1);
-    engine.pixels[color].data[0] = hexToR(color);
-    engine.pixels[color].data[1] = hexToG(color);
-    engine.pixels[color].data[2] = hexToB(color);
-    engine.pixels[color].data[3] = 255;
-  }
-  engine.worldContext.putImageData(engine.pixels[color], x, y );*/
-  /* also slow
-  engine.worldContext.fillStyle = 'rgba(' + hexToR(color) + ',' + hexToG(color) + ',' + hexToB(color) + ', 1)';
-  engine.worldContext.fillRect(x, y, 1, 1);*/
-}
