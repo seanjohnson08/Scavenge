@@ -13,14 +13,18 @@ window.addEventListener('load',function(){
     engine.world.init({
         seed:"sexpot"
     });
-
     engine.mainLoop();
+    engine.debug.fps();
 });
 
 (function(){
     var dragStart={x:0,y:0};
     var dragging=false;
     var cameraStart={};
+    var cameraX = document.getElementById('cameraX');
+    var cameraY = document.getElementById('cameraY');
+    var worldX = document.getElementById('worldX');
+    var worldY = document.getElementById('worldY');
     window.oncontextmenu=function(event){
         event.preventDefault();
         return false;
@@ -36,15 +40,15 @@ window.addEventListener('load',function(){
         if(dragging){
             engine.camera.x=-event.clientX+dragStart.x+cameraStart.x;
             engine.camera.y=-event.clientY+dragStart.y+cameraStart.y;
+            cameraX.innerHTML=engine.camera.x;
+            cameraY.innerHTML=engine.camera.y;
         }
+        var tileX = Math.ceil((engine.camera.x+event.clientX)/engine.world.chunk.tileSize);
+        var tileY = Math.ceil((engine.camera.y+event.clientY)/engine.world.chunk.tileSize);
+        worldX.innerHTML=tileX;
+        worldY.innerHTML=tileY;
     };
     window.onmouseup=function(event){
         dragging=false;
-    };
-    window.onmousewheel=function(event){
-        event.preventDefault();
-        engine.world.chunk.tileSize+=(event.wheelDeltaX||event.wheelDelta)<1?-1:1;
-        engine.world.chunk.tileSize=Math.max(2,engine.world.chunk.tileSize);
-        engine.world.chunk.cache=[];
     };
 })();

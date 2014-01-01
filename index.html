@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=640, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0"/>
     <title>Scavenge</title>
-    <script defer src="js/lib/noise/seedrandom.js"></script>
-    <script defer src="js/lib/noise/Generator.js"></script>
     <script defer src="js/lib/engine.js"></script>
     <script defer src="js/scavenge/main.js"></script>
     <style type="text/css" media="screen">
@@ -17,13 +15,25 @@
       canvas {
         width: 100%;
         height: 100%;
-      }
-      canvas {
         position: absolute;
+      }
+      #debug {
+        font-family: Menlo, Consolas, Monaco, "Lucida Console", monospace;
+        font-size: 10px;
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        padding: 5px;
+        color: #fff;
+        background-color: rgba(0, 0, 0, 0.500);
       }
     </style>
   </head>
   <body>
     <canvas id="world"></canvas>
+    <div id="debug">
+      <div><strong>FPS:</strong> <span id="fps">--</span></div>
+      <div><strong>Camera:</strong> <span id="cameraX">0</span> , <span id="cameraY">0</span></div>
+      <div><strong>Tile:</strong> <span id="worldX">0</span> , <span id="worldY">0</span></div>
   </body>
 </html>
