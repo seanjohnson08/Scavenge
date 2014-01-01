@@ -123,12 +123,13 @@ engine.debug={
             fps.style.position='absolute';
             fps.style.left='0';
             fps.style.top='0';
-            var lastFrame=engine.debug.frame;
-            setInterval(function(){
-                fps.innerHTML=engine.debug.frame-lastFrame;
-                lastFrame=engine.debug.frame;
-            },1000);
         }
+        
+        var lastFrame=engine.debug.frame;
+        setInterval(function(){
+            fps.innerHTML=engine.debug.frame-lastFrame;
+            lastFrame=engine.debug.frame;
+        },1000);
     }
 };
 
