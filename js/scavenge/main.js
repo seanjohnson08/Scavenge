@@ -41,4 +41,10 @@ window.addEventListener('load',function(){
     window.onmouseup=function(event){
         dragging=false;
     };
+    window.onmousewheel=function(event){
+        event.preventDefault();
+        engine.world.chunk.tileSize+=(event.wheelDeltaX||event.wheelDelta)<1?-1:1;
+        engine.world.chunk.tileSize=Math.max(2,engine.world.chunk.tileSize);
+        engine.world.chunk.cache=[];
+    };
 })();
