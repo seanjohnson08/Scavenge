@@ -120,16 +120,22 @@ engine.world={
 
         return global;
     })(),
+    getChunk:function(tilex,tiley){
+        var cRef=engine.world.chunk,
+            tileSize=engine.world.tiles.size;
+        return Math.floor(tilex/(cRef.width/tileSize))+','+Math.floor(tiley/(cRef.height/tileSize));
+    },
     getTile:function(x,y){
         var cRef = engine.world.chunk;
         var tileSize = engine.world.tiles.size;
         var tpc=[cRef.width/tileSize,cRef.height/tileSize];
-        var chunk=Math.floor(x/(cRef.width/tileSize))+','+Math.floor(y/(cRef.height/tileSize));
+        var chunk=engine.world.getChunk(x,y);
         if(cRef.cache[chunk]) {
             x%=tpc[0];
             y%=tpc[1];
             if(x<0) x+=tpc[0];
-            if(y<0) x+=tpc[1];
+            if(y<0) y+=tpc[1];
+            console.log(x,y);
             return engine.world.tiles[cRef.cache[chunk].tile[x+y*cRef.width/engine.world.tiles.size]];
         }
     }
