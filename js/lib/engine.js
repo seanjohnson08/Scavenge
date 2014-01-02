@@ -135,7 +135,6 @@ engine.world={
             y%=tpc[1];
             if(x<0) x+=tpc[0];
             if(y<0) y+=tpc[1];
-            console.log(x,y);
             return engine.world.tiles[cRef.cache[chunk].tile[x+y*cRef.width/engine.world.tiles.size]];
         }
     }
