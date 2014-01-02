@@ -123,10 +123,13 @@ engine.world={
     getTile:function(x,y){
         var cRef = engine.world.chunk;
         var tileSize = engine.world.tiles.size;
+        var tpc=[cRef.width/tileSize,cRef.height/tileSize];
         var chunk=Math.floor(x/(cRef.width/tileSize))+','+Math.floor(y/(cRef.height/tileSize));
         if(cRef.cache[chunk]) {
-            x%=cRef.width/tileSize;
-            y%=cRef.height/tileSize;
+            x%=tpc[0];
+            y%=tpc[1];
+            if(x<0) x+=tpc[0];
+            if(y<0) x+=tpc[1];
             return engine.world.tiles[cRef.cache[chunk].tile[x+y*cRef.width/engine.world.tiles.size]];
         }
     }
