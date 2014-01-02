@@ -17,19 +17,23 @@ engine.world={
     chunk: {
         width:160,
         height:160,
-        cache:{image:{},tile:{}},
+        cache:{},
         draw:function(x,y){
-            if(typeof engine.world.chunk.cache.image[x+','+y]!="undefined") {
+            if(typeof engine.world.chunk.cache[x+','+y]!="undefined") {
                 engine.context.drawImage(
-                    engine.world.chunk.cache.image[x+','+y],
+                    engine.world.chunk.cache[x+','+y].image,
                     x*engine.world.chunk.width-engine.camera.x,
                     y*engine.world.chunk.height-engine.camera.y,
                     engine.world.chunk.width,
                     engine.world.chunk.height
                 );
             } else {
-                engine.world.chunk.cache.image[x+','+y]=new Image();
-                engine.world.chunk.cache.tile=new Uint8Array(engine.world.chunk.width*engine.world.chunk.height);
+                var cache=engine.world.chunk.cache[x+','+y]={};
+                cache.image=new Image();
+                cache.tile=new Uint8Array(
+                    engine.world.chunk.width*engine.world.chunk.height/
+                    Math.pow(engine.world.tiles.size,2)
+                );
                 engine.world.workers[engine.world.workers.current].postMessage({
                     x:x,
                     y:y,
@@ -48,6 +52,9 @@ engine.world={
                 tmpCanvas.height=engine.world.chunk.height;
                 tmpCanvas.width=engine.world.chunk.width;
                 tmpCtx=tmpCanvas.getContext('2d');
+
+                var cache=engine.world.chunk.cache[event.data.x+','+event.data.y];
+
                 event.data.result.forEach(function(row,y){
                     row.forEach(function(tile,x){
                         tmpCtx.drawImage(
@@ -57,11 +64,11 @@ engine.world={
                             engine.world.tiles.size,
                             engine.world.tiles.size
                         );
-                        engine.world.chunk.cache.tile[x+y*engine.world.chunk.width]=engine.world.tiles[tile]._id;
+                        cache.tile[x+y*(engine.world.chunk.width/engine.world.tiles.size)]=engine.world.tiles[tile]._id;
                     });
                 });
                 image.src=tmpCanvas.toDataURL();
-                engine.world.chunk.cache.image[event.data.x+','+event.data.y]=tmpCanvas;
+                cache.image=tmpCanvas;
             }
         }
     },
@@ -112,7 +119,17 @@ engine.world={
         }
 
         return global;
-    })()
+    })(),
+    getTile:function(x,y){
+        var cRef = engine.world.chunk;
+        var tileSize = engine.world.tiles.size;
+        var chunk=Math.floor(x/(cRef.width/tileSize))+','+Math.floor(y/(cRef.height/tileSize));
+        if(cRef.cache[chunk]) {
+            x%=cRef.width/tileSize;
+            y%=cRef.height/tileSize;
+            return engine.world.tiles[cRef.cache[chunk].tile[x+y*cRef.width/engine.world.tiles.size]];
+        }
+    }
 };
 
 engine.debug={

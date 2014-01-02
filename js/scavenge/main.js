@@ -43,12 +43,13 @@ window.addEventListener('load',function(){
             cameraX.innerHTML=engine.camera.x;
             cameraY.innerHTML=engine.camera.y;
         }
-        var tileX = Math.ceil((engine.camera.x+event.clientX)/engine.world.tiles.size);
-        var tileY = Math.ceil((engine.camera.y+event.clientY)/engine.world.tiles.size);
+        var tileX = Math.floor((engine.camera.x+event.clientX)/engine.world.tiles.size);
+        var tileY = Math.floor((engine.camera.y+event.clientY)/engine.world.tiles.size);
         worldX.innerHTML=tileX;
         worldY.innerHTML=tileY;
     };
     window.onmouseup=function(event){
         dragging=false;
+        console.log(engine.world.getTile(+worldX.innerHTML,+worldY.innerHTML));
     };
 })();
