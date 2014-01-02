@@ -15,24 +15,25 @@ engine.world={
     numWorkers: 4,
     workers: [],
     chunk: {
-        tileSize:8,
         width:160,
         height:160,
+        cache:{image:{},tile:{}},
         draw:function(x,y){
-            if(typeof engine.world.chunk.cache[x+','+y]!="undefined") {
+            if(typeof engine.world.chunk.cache.image[x+','+y]!="undefined") {
                 engine.context.drawImage(
-                    engine.world.chunk.cache[x+','+y],
+                    engine.world.chunk.cache.image[x+','+y],
                     x*engine.world.chunk.width-engine.camera.x,
                     y*engine.world.chunk.height-engine.camera.y,
                     engine.world.chunk.width,
                     engine.world.chunk.height
                 );
             } else {
-                engine.world.chunk.cache[x+','+y]=new Image();
+                engine.world.chunk.cache.image[x+','+y]=new Image();
+                engine.world.chunk.cache.tile=new Uint8Array(engine.world.chunk.width*engine.world.chunk.height);
                 engine.world.workers[engine.world.workers.current].postMessage({
                     x:x,
                     y:y,
-                    tileSize:engine.world.chunk.tileSize
+                    tileSize:engine.world.tiles.size
                 });
                 engine.world.workers.current++;
                 if(engine.world.workers.current>=engine.world.numWorkers) {
@@ -51,18 +52,18 @@ engine.world={
                     row.forEach(function(tile,x){
                         tmpCtx.drawImage(
                             engine.world.tiles[tile],
-                            x*engine.world.chunk.tileSize,
-                            y*engine.world.chunk.tileSize,
-                            engine.world.chunk.tileSize,
-                            engine.world.chunk.tileSize
+                            x*engine.world.tiles.size,
+                            y*engine.world.tiles.size,
+                            engine.world.tiles.size,
+                            engine.world.tiles.size
                         );
+                        engine.world.chunk.cache.tile[x+y*engine.world.chunk.width]=engine.world.tiles[tile]._id;
                     });
                 });
                 image.src=tmpCanvas.toDataURL();
-                engine.world.chunk.cache[event.data.x+','+event.data.y]=tmpCanvas;
+                engine.world.chunk.cache.image[event.data.x+','+event.data.y]=tmpCanvas;
             }
-        },
-        cache:{}
+        }
     },
     draw: function(){
         var startX=Math.floor(engine.camera.x/engine.world.chunk.width);
@@ -88,7 +89,7 @@ engine.world={
             engine.world.workers[i]=new Worker('js/lib/worldRenderWorker.js');
             engine.world.workers[i].postMessage({
                 seed:engine.world.seed,
-                tileSize:engine.world.chunk.tileSize,
+                tileSize:engine.world.tiles.size,
                 chunk:{
                     width:engine.world.chunk.width,
                     height:engine.world.chunk.height
@@ -101,11 +102,13 @@ engine.world={
     tiles:(function(){
         var i;
         var tiles=['dirt','grass','ice','log','sand','snow','water'];
-        var global={};
+        var global={size:8};
 
         for(i=0;i<tiles.length;i++) {
+            global[i]=tiles[i];
             global[tiles[i]]=new Image();
             global[tiles[i]].src='assets/'+tiles[i]+'.png';
+            global[tiles[i]]._id=i;
         }
 
         return global;
